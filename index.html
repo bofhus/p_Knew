@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pedagogisk karta över utbildningsdesign</title>
+  <style>
+    :root {
+      --bg: #eef4fb;
+      --panel: #ffffff;
+      --text: #18324a;
+      --muted: #5d7387;
+      --line: #d7e1ea;
+      --shadow: 0 10px 30px rgba(20, 52, 84, 0.12);
+      --yellow: #f4b528;
+      --green: #5ea43d;
+      --orange: #e97c22;
+      --purple: #9a4b95;
+      --blue1: #dbe8f6;
+      --blue2: #b7d0ea;
+      --bas: linear-gradient(135deg, #d7b37a, #f0d5a7);
+      --interaktiv: linear-gradient(135deg, #74b786, #b7e0c0);
+      --tillampning: linear-gradient(135deg, #6a88b2, #afc7e7);
+      --sim: linear-gradient(135deg, #7f94a8, #c8d3df);
+      --immersiv: linear-gradient(135deg, #6a67b7, #b6b0ea);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      background: linear-gradient(180deg, var(--blue2), var(--bg));
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #ffffff;
+      text-shadow: 0 3px 18px rgba(0,0,0,0.22);
+    }
+
+    .hero p {
+      margin: 0 auto;
+      max-width: 900px;
+      color: #f4f8fc;
+      font-size: 1rem;
+    }
+
+    .role-controls {
+      margin: 18px auto 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 999px;
+      color: #fff;
+    }
+
+    .role-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.02em;
+    }
+
+    .role-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.15);
+      opacity: 0.65;
+      transition: opacity 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .role-pill.active {
+      opacity: 1;
+      background: #ffffff;
+      color: #1c3f5c;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.35);
+    }
+
+    .role-controls.is-admin {
+      background: rgba(94, 164, 61, 0.28);
+      border-color: rgba(94, 164, 61, 0.75);
+    }
+
+    .role-controls.is-admin .role-button {
+      background: #3b4a56;
+      color: #e8eff6;
+      border-color: #667888;
+    }
+
+    .role-button,
+    .save-button {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #c6d0da;
+      color: #1f3548;
+    }
+
+    .role-button {
+      border: 1px solid #9fb0bf;
+    }
+
+    .role-button:hover,
+    .role-button:focus-visible {
+      background: #b6c2ce;
+      outline: 2px solid #8fa5b8;
+      outline-offset: 1px;
+    }
+
+    .save-button {
+      border-radius: 12px;
+      background: #5ea43d;
+      color: #fff;
+      margin-top: 14px;
+    }
+
+    .editor-fields {
+      margin-top: 16px;
+      display: none;
+      gap: 12px;
+    }
+
+    .editor-fields.open {
+      display: grid;
+    }
+
+    .editor-fields label {
+      display: grid;
+      gap: 6px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #2c4e6b;
+    }
+
+    .editor-fields input,
+    .editor-fields textarea {
+      border: 1px solid #c3d4e4;
+      border-radius: 10px;
+      padding: 10px;
+      font: inherit;
+      color: #17324a;
+      resize: vertical;
+      min-height: 42px;
+    }
+
+    .editor-hint {
+      margin: 0;
+      color: #5d7387;
+      font-size: 0.84rem;
+    }
+
+    .layout {
+      display: block;
+    }
+
+    .matrix-card,
+    .detail-card {
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.5);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .matrix-card {
+      overflow: hidden;
+    }
+
+    .matrix-wrap {
+      overflow-x: auto;
+    }
+
+    .matrix {
+      width: 100%;
+      min-width: 980px;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .matrix th,
+    .matrix td {
+      border-right: 1px dashed var(--line);
+      border-bottom: 1px dashed var(--line);
+      vertical-align: stretch;
+    }
+
+    .matrix tr:last-child td,
+    .matrix tr:last-child th {
+      border-bottom: none;
+    }
+
+    .matrix th:last-child,
+    .matrix td:last-child {
+      border-right: none;
+    }
+
+    .corner {
+      min-width: 220px;
+      background: linear-gradient(180deg, #e8f0f9, #d9e7f4);
+      color: var(--text);
+      padding: 18px;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    .column-header {
+      color: white;
+      padding: 18px 14px;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .col-1 { background: var(--yellow); }
+    .col-2 { background: var(--green); }
+    .col-3 { background: var(--orange); }
+    .col-4 { background: var(--purple); }
+
+    .row-header {
+      width: 220px;
+      padding: 18px 16px;
+      color: white;
+      text-align: left;
+    }
+
+    .row-header .level {
+      display: block;
+      font-size: 1.2rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      letter-spacing: 0.04em;
+    }
+
+    .row-header .method {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .method-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.22);
+      border: 1px solid rgba(255,255,255,0.42);
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .row-bas { background: var(--bas); }
+    .row-interaktiv { background: var(--interaktiv); }
+    .row-tillampning { background: var(--tillampning); }
+    .row-sim { background: var(--sim); }
+    .row-immersiv { background: var(--immersiv); }
+
+    .cell {
+      padding: 10px;
+      background: rgba(255,255,255,0.85);
+      min-height: 138px;
+    }
+
+    .cell button {
+      width: 100%;
+      height: 100%;
+      min-height: 116px;
+      display: flex;
+      flex-direction: column;
+      border: none;
+      border-radius: 18px;
+      padding: 16px;
+      cursor: pointer;
+      text-align: left;
+      background: linear-gradient(180deg, #ffffff, #f6f9fc);
+      color: var(--text);
+      box-shadow: 0 6px 16px rgba(24,50,74,0.08);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, outline-color 0.18s ease;
+      outline: 2px solid transparent;
+    }
+
+    .cell button:hover,
+    .cell button:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(24,50,74,0.14);
+      outline-color: #6e9fd3;
+    }
+
+    .cell .tag {
+      display: inline-block;
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .cell .topline {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .cell .icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      font-size: 1.1rem;
+      background: #eaf1f9;
+      border: 1px solid #cfdeec;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    }
+
+    .cell .title {
+      display: block;
+      font-size: 1.02rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      line-height: 1.25;
+    }
+
+    .cell .topline .title {
+      margin-bottom: 0;
+    }
+
+    .cell .summary {
+      display: block;
+      font-size: 0.92rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .detail-card {
+      padding: 22px;
+      width: min(720px, calc(100vw - 32px));
+      max-height: 88vh;
+      overflow-y: auto;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(16, 35, 56, 0.45);
+      z-index: 1000;
+      padding: 16px;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .detail-header h2 {
+      margin: 0;
+      font-size: 1.4rem;
+    }
+
+    .close-button {
+      border: none;
+      background: #edf3f9;
+      color: #31506c;
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      font-size: 1.25rem;
+      line-height: 1;
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .close-button:hover,
+    .close-button:focus-visible {
+      background: #d9e8f6;
+      outline: 2px solid #6e9fd3;
+      outline-offset: 1px;
+    }
+
+    .detail-card h2 {
+      margin: 0 0 8px;
+      font-size: 1.4rem;
+    }
+
+    .detail-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      background: #edf3f9;
+      color: #31506c;
+    }
+
+    .detail-section {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .detail-section h3 {
+      margin: 0 0 8px;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #5a748e;
+    }
+
+    .detail-section p,
+    .detail-section li {
+      line-height: 1.55;
+      color: #28445d;
+    }
+
+    .detail-section ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .media-box {
+      border: 1px dashed #b9cad9;
+      border-radius: 12px;
+      min-height: 180px;
+      display: grid;
+      place-items: center;
+      background: #f7fbff;
+      overflow: hidden;
+    }
+
+    .media-box img,
+    .media-box video,
+    .media-box iframe {
+      width: 100%;
+      max-height: 320px;
+      border: 0;
+      object-fit: contain;
+      background: #000;
+    }
+
+    .media-placeholder {
+      color: #4f6780;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      padding: 12px;
+      text-align: center;
+    }
+
+    @media (max-width: 1100px) {
+      .detail-card {
+        max-height: 92vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>Pedagogisk karta över utbildningsdesign</h1>
+      <p>
+        Första utgåva av en interaktiv matris där varje del är klickbar och visar ett konkret exempel.
+        Den är byggd som en enkel, fristående HTML-fil för att du senare ska kunna vidareutveckla den i Codex utan att behöva gräva i ett ramverk som någon överentusiastisk människa valde för att känna sig modern.
+      </p>
+      <div class="role-controls" id="role-controls">
+        <span class="role-status" id="role-status">
+          Aktiv roll:
+          <span class="role-pill active" id="role-user-pill">Användare</span>
+          <span class="role-pill" id="role-admin-pill">Administratör</span>
+        </span>
+        <button class="role-button" id="role-toggle" type="button">Byt till administratör</button>
+      </div>
+    </section>
+
+    <div class="layout">
+      <section class="matrix-card" aria-label="Interaktiv utbildningsmatris">
+        <div class="matrix-wrap">
+          <table class="matrix">
+            <thead>
+              <tr>
+                <th class="corner">Genomförandesätt ↓<br>Utbildningsdel →</th>
+                <th class="column-header col-1">Kunskapsinhämtning</th>
+                <th class="column-header col-2">Förståelse / Fördjupning</th>
+                <th class="column-header col-3">Träning / Tillämpning</th>
+                <th class="column-header col-4">Examination / Återkoppling</th>
+              </tr>
+            </thead>
+            <tbody id="matrix-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="modal" id="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+      <aside class="detail-card" aria-live="polite">
+        <div class="detail-header">
+          <h2 id="detail-title">Välj en ruta</h2>
+          <button class="close-button" id="close-modal" type="button" aria-label="Stäng popup">×</button>
+        </div>
+        <div class="detail-meta" id="detail-meta"></div>
+        <p id="detail-intro">
+          Klicka på en exempeldel i matrisen för att visa ett konkret exempel, syfte, genomförande och vad som krävs.
+        </p>
+
+        <div class="detail-section">
+          <h3>Exempel</h3>
+          <p id="detail-example">Här visas exempeltext för vald ruta.</p>
+        </div>
+
+        <div class="detail-section">
+          <h3>Praktiskt genomförande</h3>
+          <p id="detail-practical">Här visas hur momentet kan genomföras i praktiken.</p>
+        </div>
+
+        <div class="detail-section">
+          <h3>Vad det ger</h3>
+          <ul id="detail-benefits"></ul>
+        </div>
+
+        <div class="detail-section">
+          <h3>Att tänka på</h3>
+          <p id="detail-notes">Här visas råd och begränsningar.</p>
+        </div>
+
+        <div class="detail-section">
+          <h3>Bild / film</h3>
+          <div class="media-box" id="detail-media">
+            <p class="media-placeholder">Exempelbild/film</p>
+          </div>
+        </div>
+
+        <p class="footer-note">
+          Tips: Nästa version kan få sök, filtrering, export av exempel och en redaktörsvy för att lägga in egna exempel per ruta.
+        </p>
+
+        <div class="editor-fields" id="editor-fields">
+          <p class="editor-hint">Administratörsläge: redigera texten nedan och spara ändringarna.</p>
+          <label>Titel
+            <input type="text" id="edit-title">
+          </label>
+          <label>Sammanfattning (visas i matris + popup)
+            <textarea id="edit-summary"></textarea>
+          </label>
+          <label>Exempel
+            <textarea id="edit-example"></textarea>
+          </label>
+          <label>Praktiskt genomförande
+            <textarea id="edit-practical"></textarea>
+          </label>
+          <label>Vad det ger (en punkt per rad)
+            <textarea id="edit-benefits"></textarea>
+          </label>
+          <label>Att tänka på
+            <textarea id="edit-notes"></textarea>
+          </label>
+          <label>Länk till bild/film (URL)
+            <input type="url" id="edit-media-url" placeholder="https://...">
+          </label>
+          <button class="save-button" id="save-cell" type="button">Spara ändringar</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const initialData = [
+      {
+        level: 'Bas',
+        method: 'PDF / Dokument',
+        rowClass: 'row-bas',
+        cells: [
+          {
+            category: 'Kunskapsinhämtning',
+            title: 'Teoritext',
+            summary: 'Kort faktablad eller styrdokument med grundbegrepp.',
+            example: 'En PDF på 4 sidor som beskriver grunderna i informationssäkerhet, centrala begrepp och roller i verksamheten.',
+            practical: 'Publiceras i lärplattform eller intranät. Deltagaren läser materialet före nästa moment och kvitterar genomfört moment.',
+            benefits: ['Enkelt att producera', 'Låg teknisk tröskel', 'Fungerar väl för styrande innehåll'],
+            notes: 'Bra för grundkunskap, men riskerar passiv konsumtion om den inte kombineras med frågor eller diskussion.'
+          },
+          {
+            category: 'Förståelse / Fördjupning',
+            title: 'Fördjupande läsanvisning',
+            summary: 'Styrd läsning med frågor som hjälper tolkning.',
+            example: 'Deltagaren får läsa ett fall och besvara tre öppna reflektionsfrågor kring risk, ansvar och avvägningar.',
+            practical: 'Läggs som bilaga till dokumentet eller som instruktion i kursplattformen. Svar kan lämnas i fritextfält eller diskuteras i grupp.',
+            benefits: ['Ökar aktiv läsning', 'Stödjer analys', 'Fungerar i nästan alla utbildningar'],
+            notes: 'Kräver tydliga frågor. Annars blir det bara mer text, vilket mänskligheten redan producerar i överflöd.'
+          },
+          {
+            category: 'Träning / Tillämpning',
+            title: 'Case-uppgifter',
+            summary: 'Textbaserade scenarier där deltagaren väljer åtgärd.',
+            example: 'Deltagaren får ett scenario om störd verksamhet och ska beskriva vilka åtgärder som bör prioriteras först.',
+            practical: 'Kan genomföras individuellt eller i grupp. Svaren diskuteras med handledare eller jämförs mot facit.',
+            benefits: ['Låg kostnad', 'Bygger tillämpning', 'Bra bro mellan teori och praktik'],
+            notes: 'Blir bättre om caset känns verklighetsnära och knyts till den egna verksamheten.'
+          },
+          {
+            category: 'Examination / Återkoppling',
+            title: 'Reflektionsfrågor',
+            summary: 'Skriftliga frågor som visar hur deltagaren resonerar.',
+            example: 'Efter avslutat moment svarar deltagaren på vad som var mest kritiskt, vad som var svårt och hur kunskapen ska användas i arbetet.',
+            practical: 'Besvaras i lärplattform, i dokumentmall eller muntligt i handledd grupp.',
+            benefits: ['Ger kvalitativ återkoppling', 'Stödjer transfer till arbetet', 'Bra för chef och handledare'],
+            notes: 'Mäter resonemang bättre än rena faktatest, men tar längre tid att bedöma.'
+          }
+        ]
+      },
+      {
+        level: 'Interaktiv',
+        method: 'Quiz / Interaktivt test',
+        rowClass: 'row-interaktiv',
+        cells: [
+          {
+            category: 'Kunskapsinhämtning',
+            title: 'Kunskapstest',
+            summary: 'Snabba frågor som aktiverar grundkunskap.',
+            example: 'Fem flervalsfrågor om centrala begrepp direkt efter introduktionsmaterialet.',
+            practical: 'Byggs i lärplattform eller enkel webbmodul. Direkt återkoppling visas efter varje fråga.',
+            benefits: ['Omedelbar feedback', 'Lätt att följa upp', 'Bra repetition'],
+            notes: 'Passar fakta och begrepp. Mindre lämpligt för komplexa bedömningar.'
+          },
+          {
+            category: 'Förståelse / Fördjupning',
+            title: 'Begrepps-quiz',
+            summary: 'Frågor som testar om deltagaren förstår samband.',
+            example: 'Deltagaren matchar begrepp med rätt konsekvens, ansvarsnivå eller tillämpning i ett scenario.',
+            practical: 'Kan byggas som matchning, rangordning eller flervalsfrågor med motivering.',
+            benefits: ['Mäter mer än minne', 'Tvingar fram tolkning', 'Skalbart för många deltagare'],
+            notes: 'Blir starkare om felaktiga svar får förklaringar, inte bara röd markering som om systemet vore surmulet.'
+          },
+          {
+            category: 'Träning / Tillämpning',
+            title: 'Scenariofrågor',
+            summary: 'Grenade frågor där val påverkar nästa steg.',
+            example: 'Deltagaren får välja hur en incident ska hanteras. Varje val leder vidare till ny information och nya beslut.',
+            practical: 'Kan byggas i H5P, Storyline eller egen HTML-logik. Varje väg ger särskild återkoppling.',
+            benefits: ['Efterliknar beslutssituationer', 'Engagerar mer än statiskt material', 'Bra för tillämpning på distans'],
+            notes: 'Kräver genomtänkt logik så att inte allt känns slumpmässigt.'
+          },
+          {
+            category: 'Examination / Återkoppling',
+            title: 'Automatiskt test',
+            summary: 'Digital examination med poäng, gränsvärden och återkoppling.',
+            example: 'Ett avslutande test med 20 frågor där minst 80 procent rätt krävs för godkänt.',
+            practical: 'Resultat lagras i lärplattform och kan användas för statistik, repetition och uppföljning.',
+            benefits: ['Effektivt för stora grupper', 'Spårbart', 'Likvärdig bedömning'],
+            notes: 'Mäter bäst tydligt definierad kunskap. Komplettera gärna med tillämpning om förmåga ska bedömas.'
+          }
+        ]
+      },
+      {
+        level: 'Tillämpning',
+        method: 'Video / Genomgång',
+        rowClass: 'row-tillampning',
+        cells: [
+          {
+            category: 'Kunskapsinhämtning',
+            title: 'Föreläsning',
+            summary: 'Inspelad genomgång som ger en gemensam grund.',
+            example: 'En 8-minuters videogenomgång där instruktören förklarar syfte, centrala moment och vanliga fel.',
+            practical: 'Publiceras som inspelad film med kapitelmarkörer och gärna ett efterföljande kunskapstest.',
+            benefits: ['Enhetligt budskap', 'Bra för distribuerad utbildning', 'Lätt att återanvända'],
+            notes: 'Videor bör vara korta och fokuserade. Långa monologer är ett brott mot koncentrationsförmågan.'
+          },
+          {
+            category: 'Förståelse / Fördjupning',
+            title: 'Demonstration',
+            summary: 'Visar hur ett moment faktiskt utförs.',
+            example: 'Instruktören visar steg för steg hur ett system används eller hur en procedur ska genomföras i rätt ordning.',
+            practical: 'Filmas från rätt perspektiv, gärna med grafik och tydliga stoppunkter där deltagaren ombeds tänka efter.',
+            benefits: ['Visualiserar arbetsgång', 'Minskar tolkningsfel', 'Bra stöd inför praktisk övning'],
+            notes: 'Bör kombineras med egen aktivitet. Att bara titta är inte samma sak som att kunna.'
+          },
+          {
+            category: 'Träning / Tillämpning',
+            title: 'Exempelanalys',
+            summary: 'Video eller genomgång där deltagaren analyserar ett exempel.',
+            example: 'Deltagaren ser ett inspelat händelseförlopp och ska identifiera vad som gjordes rätt, fel och varför.',
+            practical: 'Kan användas i klassrum eller på distans. Pausa videon vid nyckelpunkter och låt deltagarna motivera sina svar.',
+            benefits: ['Tränar bedömning', 'Ger gemensam diskussionsgrund', 'Stödjer reflektion'],
+            notes: 'Bra när man vill komma åt resonemang utan att bygga full simulering.'
+          },
+          {
+            category: 'Examination / Återkoppling',
+            title: 'Muntligt förhör',
+            summary: 'Samtalsbaserad kontroll av förståelse och resonemang.',
+            example: 'Deltagaren får redogöra för hur ett problem ska hanteras och motivera sitt val av åtgärder inför handledare.',
+            practical: 'Genomförs fysiskt eller via videomöte med bedömningsstöd och tydliga kriterier.',
+            benefits: ['Prövar förståelse på djupet', 'Ger direkt återkoppling', 'Bra för komplexa frågor'],
+            notes: 'Kräver tid och bedömarkompetens. Passar bäst där kvalitet väger tyngre än masshantering.'
+          }
+        ]
+      },
+      {
+        level: 'Scenario',
+        method: 'Simulering / Scenario',
+        rowClass: 'row-sim',
+        cells: [
+          {
+            category: 'Kunskapsinhämtning',
+            title: 'Situationsspel',
+            summary: 'En enkel simulering som sätter kunskap i kontext.',
+            example: 'Deltagaren går igenom ett tidslinjebaserat scenario där information tillkommer stegvis och påverkar förståelsen.',
+            practical: 'Kan byggas som bordsspel, digitalt scenario eller lärarledd övning med spelkort och injektioner.',
+            benefits: ['Skapar sammanhang', 'Ökar motivation', 'Förbereder för övning'],
+            notes: 'Behöver inte vara tekniskt avancerat. Struktur slår ofta glitter.'
+          },
+          {
+            category: 'Förståelse / Fördjupning',
+            title: 'Beslutsövning',
+            summary: 'Deltagaren tränar att väga alternativ under osäkerhet.',
+            example: 'En grupp får bedöma flera handlingsalternativ under tidspress och redovisa varför ett visst beslut valdes.',
+            practical: 'Använd facilitator, beslutsunderlag och tydlig återkoppling efteråt om konsekvenser och vägval.',
+            benefits: ['Tränar analys och prioritering', 'Ger god gruppdynamik', 'Passar chefs- och stabsutbildning'],
+            notes: 'Blir bäst när återkopplingen visar konsekvenser, inte bara rätt eller fel.'
+          },
+          {
+            category: 'Träning / Tillämpning',
+            title: 'Praktiskt scenario',
+            summary: 'Tillämpning i ett realistiskt men kontrollerat förlopp.',
+            example: 'Deltagaren får hantera ett eskalerande läge med inkommande rapporter, resursbrister och motstridiga prioriteringar.',
+            practical: 'Kräver scenarioledare, spelplan, tidssatta händelser och tydliga lärandemål per moment.',
+            benefits: ['Hög relevans', 'Tränar handlingsberedskap', 'Bra för samverkan'],
+            notes: 'Viktigt att scenariot inte bara blir teater. Det ska vara kopplat till faktisk förmåga.'
+          },
+          {
+            category: 'Examination / Återkoppling',
+            title: 'Scenario-prov',
+            summary: 'Bedömning i eller efter en genomförd simulering.',
+            example: 'Bedömning sker mot kriterier som beslutskvalitet, samverkan, tempo och förmåga att anpassa sig till förändrad information.',
+            practical: 'Använd observationsmall, bedömare och strukturerad återkoppling direkt efter genomförandet.',
+            benefits: ['Mäter förmåga i kontext', 'Ger rik återkoppling', 'Hög trovärdighet'],
+            notes: 'Mer resurskrävande, men också betydligt närmare verklig prestation än ett vanligt prov.'
+          }
+        ]
+      },
+      {
+        level: 'Immersiv',
+        method: 'XR / Immersiv miljö',
+        rowClass: 'row-immersiv',
+        cells: [
+          {
+            category: 'Kunskapsinhämtning',
+            title: 'Virtuell miljö',
+            summary: 'Deltagaren orienterar sig i en miljö snarare än att bara läsa om den.',
+            example: 'En XR-miljö där deltagaren lär känna en anläggning, identifierar riskpunkter och förstår flöden i rummet.',
+            practical: 'Kan byggas som 360-miljö, VR-scenario eller enklare klickbar 3D-vy beroende på budget och behov.',
+            benefits: ['Stark situationsbild', 'Bra för miljö- och objektskunskap', 'Minnesstödjande'],
+            notes: 'Använd när rumslig förståelse verkligen betyder något. Inte bara för att headset ser futuristiska ut på möten.'
+          },
+          {
+            category: 'Förståelse / Fördjupning',
+            title: 'Situationsförståelse',
+            summary: 'Deltagaren tolkar vad som händer i en realistisk miljö.',
+            example: 'I en virtuell miljö ska deltagaren identifiera avvikelser, risker och kritiska signaler innan situationen eskalerar.',
+            practical: 'Byggs med tydliga observationsmål och återkoppling på vad deltagaren uppmärksammat eller missat.',
+            benefits: ['Tränar uppmärksamhet', 'Bra för säkerhetskritiska moment', 'Ger hög närvaro'],
+            notes: 'Viktigast är designen av uppgiften, inte tekniken i sig.'
+          },
+          {
+            category: 'Träning / Tillämpning',
+            title: 'Praktisk träning',
+            summary: 'Deltagaren övar handgrepp eller beslutsfattande i immersiv miljö.',
+            example: 'Deltagaren genomför en procedur i VR där fel får konsekvenser i scenariot men utan risk i verkligheten.',
+            practical: 'Behöver tydliga mål, återställbara scenarier och loggning av centrala val eller moment.',
+            benefits: ['Säker träning', 'Hög realism', 'Möjliggör repetition'],
+            notes: 'Motiveras särskilt när verklig övning är dyr, farlig eller svår att tillgängliggöra.'
+          },
+          {
+            category: 'Examination / Återkoppling',
+            title: 'After Action Review',
+            summary: 'Återspelning och analys av vad deltagaren faktiskt gjorde.',
+            example: 'Efter XR-pass går handledaren igenom vägval, reaktionstid och kritiska beslut utifrån logg och inspelning.',
+            practical: 'Kombinera systemdata med handledarbedömning och låt deltagaren själv reflektera över sina beslut.',
+            benefits: ['Mycket stark återkoppling', 'Knyter ihop upplevelse och lärande', 'Bra underlag för förbättring'],
+            notes: 'En bra debrief är ofta viktigare än själva tekniken. Människor älskar att rusa förbi den delen och undra varför inget fastnade.'
+          }
+        ]
+      }
+    ];
+
+    const STORAGE_KEY = 'pedagogiskKartaData';
+    const ADMIN_PASSWORD = 'utbe';
+
+    const matrixBody = document.getElementById('matrix-body');
+    const detailTitle = document.getElementById('detail-title');
+    const detailMeta = document.getElementById('detail-meta');
+    const detailIntro = document.getElementById('detail-intro');
+    const detailExample = document.getElementById('detail-example');
+    const detailPractical = document.getElementById('detail-practical');
+    const detailBenefits = document.getElementById('detail-benefits');
+    const detailNotes = document.getElementById('detail-notes');
+    const detailMedia = document.getElementById('detail-media');
+    const detailModal = document.getElementById('detail-modal');
+    const closeModalButton = document.getElementById('close-modal');
+    const roleControls = document.getElementById('role-controls');
+    const roleStatus = document.getElementById('role-status');
+    const roleToggle = document.getElementById('role-toggle');
+    const roleUserPill = document.getElementById('role-user-pill');
+    const roleAdminPill = document.getElementById('role-admin-pill');
+    const editorFields = document.getElementById('editor-fields');
+    const editTitle = document.getElementById('edit-title');
+    const editSummary = document.getElementById('edit-summary');
+    const editExample = document.getElementById('edit-example');
+    const editPractical = document.getElementById('edit-practical');
+    const editBenefits = document.getElementById('edit-benefits');
+    const editNotes = document.getElementById('edit-notes');
+    const editMediaUrl = document.getElementById('edit-media-url');
+    const saveCellButton = document.getElementById('save-cell');
+
+    let isAdmin = false;
+    let selectedCellIndex = null;
+    let data = loadData();
+
+    const rowIcons = {
+      'PDF / Dokument': '📄',
+      'Quiz / Interaktivt test': '❓',
+      'Video / Genomgång': '🎬',
+      'Simulering / Scenario': '🧩',
+      'XR / Immersiv miljö': '🥽'
+    };
+
+    const cellIcons = {
+      'Kunskapsinhämtning': '📘',
+      'Förståelse / Fördjupning': '🧠',
+      'Träning / Tillämpning': '🛠️',
+      'Examination / Återkoppling': '✅'
+    };
+
+    function loadData() {
+      const storedData = localStorage.getItem(STORAGE_KEY);
+      if (!storedData) return structuredClone(initialData);
+      try {
+        return JSON.parse(storedData);
+      } catch {
+        return structuredClone(initialData);
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function openModal() {
+      detailModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      closeModalButton.focus();
+    }
+
+    function closeModal() {
+      detailModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function renderMatrix() {
+      matrixBody.innerHTML = '';
+      data.forEach((row, rowIndex) => {
+        const tr = document.createElement('tr');
+
+        const rowHeader = document.createElement('th');
+        rowHeader.className = `row-header ${row.rowClass}`;
+        rowHeader.scope = 'row';
+        rowHeader.innerHTML = `<span class="level">${row.level}</span><span class="method"><span class="method-icon" aria-hidden="true">${rowIcons[row.method] ?? '📌'}</span>${row.method}</span>`;
+        tr.appendChild(rowHeader);
+
+        row.cells.forEach((cell, cellIndex) => {
+          const td = document.createElement('td');
+          td.className = 'cell';
+
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.dataset.row = rowIndex;
+          button.dataset.cell = cellIndex;
+          button.innerHTML = `
+            <span class="tag">${row.method}</span>
+            <span class="topline">
+              <span class="icon" aria-hidden="true">${cellIcons[cell.category] ?? '📌'}</span>
+              <span class="title">${cell.title}</span>
+            </span>
+            <span class="summary">${cell.summary}</span>
+          `;
+          button.addEventListener('click', () => showDetail(row, cell, button));
+
+          td.appendChild(button);
+          tr.appendChild(td);
+        });
+
+        matrixBody.appendChild(tr);
+      });
+    }
+
+    function updateRoleUI() {
+      roleStatus.setAttribute('aria-label', `Aktiv roll: ${isAdmin ? 'Administratör' : 'Användare'}`);
+      roleToggle.textContent = isAdmin ? 'Byt till användare' : 'Byt till administratör';
+      roleUserPill.classList.toggle('active', !isAdmin);
+      roleAdminPill.classList.toggle('active', isAdmin);
+      roleControls.classList.toggle('is-admin', isAdmin);
+      editorFields.classList.toggle('open', isAdmin && selectedCellIndex !== null);
+    }
+
+    function fillEditor(cell) {
+      editTitle.value = cell.title;
+      editSummary.value = cell.summary;
+      editExample.value = cell.example;
+      editPractical.value = cell.practical;
+      editBenefits.value = cell.benefits.join('\n');
+      editNotes.value = cell.notes;
+      editMediaUrl.value = cell.mediaUrl ?? '';
+    }
+
+    function renderMedia(cell) {
+      detailMedia.innerHTML = '';
+
+      const mediaUrl = (cell.mediaUrl ?? '').trim();
+      if (!mediaUrl) {
+        detailMedia.innerHTML = '<p class="media-placeholder">Exempelbild/film</p>';
+        return;
+      }
+
+      const lowerUrl = mediaUrl.toLowerCase();
+      const isImage = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.avif'].some(ext => lowerUrl.includes(ext));
+      const isVideoFile = ['.mp4', '.webm', '.ogg', '.mov', '.m4v'].some(ext => lowerUrl.includes(ext));
+      const isYoutube = lowerUrl.includes('youtube.com/watch') || lowerUrl.includes('youtu.be/');
+
+      if (isImage) {
+        const img = document.createElement('img');
+        img.src = mediaUrl;
+        img.alt = `Exempelbild för ${cell.title}`;
+        detailMedia.appendChild(img);
+        return;
+      }
+
+      if (isVideoFile) {
+        const video = document.createElement('video');
+        video.src = mediaUrl;
+        video.controls = true;
+        detailMedia.appendChild(video);
+        return;
+      }
+
+      if (isYoutube) {
+        const iframe = document.createElement('iframe');
+        iframe.src = toYoutubeEmbedUrl(mediaUrl);
+        iframe.title = `Exempelfilm för ${cell.title}`;
+        iframe.loading = 'lazy';
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+        iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+        iframe.allowFullscreen = true;
+        detailMedia.appendChild(iframe);
+        return;
+      }
+
+      const link = document.createElement('a');
+      link.href = mediaUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'Öppna bild/film';
+      detailMedia.appendChild(link);
+    }
+
+    function toYoutubeEmbedUrl(url) {
+      try {
+        const parsed = new URL(url);
+        if (parsed.hostname.includes('youtu.be')) {
+          const id = parsed.pathname.replace('/', '');
+          return `https://www.youtube.com/embed/${id}`;
+        }
+
+        const videoId = parsed.searchParams.get('v');
+        if (videoId) {
+          return `https://www.youtube.com/embed/${videoId}`;
+        }
+      } catch {
+        return url;
+      }
+
+      return url;
+    }
+
+    function showDetail(row, cell, activeButton) {
+      selectedCellIndex = {
+        row: Number(activeButton.dataset.row),
+        cell: Number(activeButton.dataset.cell)
+      };
+
+      document.querySelectorAll('.cell button').forEach(btn => btn.setAttribute('aria-pressed', 'false'));
+      activeButton.setAttribute('aria-pressed', 'true');
+
+      detailTitle.textContent = cell.title;
+      detailMeta.innerHTML = `
+        <span class="pill">${row.level}</span>
+        <span class="pill">${row.method}</span>
+        <span class="pill">${cell.category}</span>
+      `;
+      detailIntro.textContent = cell.summary;
+      detailExample.textContent = cell.example;
+      detailPractical.textContent = cell.practical;
+      detailNotes.textContent = cell.notes;
+      renderMedia(cell);
+      detailBenefits.innerHTML = '';
+      cell.benefits.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        detailBenefits.appendChild(li);
+      });
+
+      if (isAdmin) {
+        fillEditor(cell);
+      }
+      updateRoleUI();
+
+      openModal();
+    }
+
+    function saveSelectedCell() {
+      if (!isAdmin || !selectedCellIndex) return;
+
+      const cell = data[selectedCellIndex.row].cells[selectedCellIndex.cell];
+      cell.title = editTitle.value.trim();
+      cell.summary = editSummary.value.trim();
+      cell.example = editExample.value.trim();
+      cell.practical = editPractical.value.trim();
+      cell.notes = editNotes.value.trim();
+      cell.mediaUrl = editMediaUrl.value.trim();
+      cell.benefits = editBenefits.value
+        .split('\n')
+        .map(item => item.trim())
+        .filter(Boolean);
+
+      if (cell.benefits.length === 0) {
+        cell.benefits = ['(Ingen punkt angiven)'];
+      }
+
+      saveData();
+      renderMatrix();
+      showDetail(data[selectedCellIndex.row], cell, document.querySelector(`button[data-row="${selectedCellIndex.row}"][data-cell="${selectedCellIndex.cell}"]`));
+      alert('Ändringar sparade.');
+    }
+
+    roleToggle.addEventListener('click', () => {
+      if (isAdmin) {
+        isAdmin = false;
+        updateRoleUI();
+        return;
+      }
+
+      const enteredPassword = prompt('Ange administratörslösenord:');
+      if (enteredPassword === ADMIN_PASSWORD) {
+        isAdmin = true;
+        updateRoleUI();
+      } else if (enteredPassword !== null) {
+        alert('Fel lösenord.');
+      }
+    });
+
+    saveCellButton.addEventListener('click', saveSelectedCell);
+
+    renderMatrix();
+    updateRoleUI();
+
+    closeModalButton.addEventListener('click', closeModal);
+    detailModal.addEventListener('click', event => {
+      if (event.target === detailModal) closeModal();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && detailModal.classList.contains('open')) {
+        closeModal();
+      }
+    });
+  </script>
+</body>
+</html>

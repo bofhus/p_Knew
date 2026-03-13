@@ -544,18 +544,14 @@
         Den är byggd som en enkel, fristående HTML-fil för att du senare ska kunna vidareutveckla den i Codex utan att behöva gräva i ett ramverk som någon överentusiastisk människa valde för att känna sig modern.
       </p>
       <div class="role-controls" id="role-controls">
-        <span class="role-status" id="role-status">
-          Aktiv roll:
-          <span class="role-pill active" id="role-user-pill">Användare</span>
-          <span class="role-pill" id="role-admin-pill">Administratör</span>
-        </span>
-        <form class="login-form" id="login-form">
-          <input type="text" id="login-username" name="username" autocomplete="username" placeholder="username" required>
-          <input type="password" id="login-password" name="password" autocomplete="current-password" placeholder="password" required>
-          <button class="role-button" id="login-button" type="submit">Logga in</button>
-        </form>
-        <button class="role-button" id="role-toggle" type="button">Byt till administratör</button>
-        <p class="login-message" id="login-message" aria-live="polite"></p>
+        <button class="role-button" id="open-login" type="button">Admin login</button>
+        <div class="role-status">Adminverktyg visas efter inloggning.</div>
+      </div>
+      <div class="role-controls hidden" id="admin-toolbar">
+        <span class="role-status">Adminläge</span>
+        <button class="role-button" id="toggle-edit-mode" type="button">Edit content</button>
+        <button class="role-button" id="open-admins" type="button">Manage admins</button>
+        <button class="role-button" id="admin-logout" type="button">Logout</button>
       </div>
     </section>
 
@@ -583,7 +579,8 @@
       <aside class="detail-card" aria-live="polite">
         <div class="detail-header">
           <h2 id="detail-title">Välj en ruta</h2>
-          <button class="close-button" id="close-modal" type="button" aria-label="Stäng popup">×</button>
+          <div><button class="role-button hidden" id="detail-edit-btn" type="button">Edit</button>
+          <button class="close-button" id="close-modal" type="button" aria-label="Stäng popup">×</button></div>
         </div>
         <div class="detail-meta" id="detail-meta"></div>
         <p id="detail-intro">
@@ -621,12 +618,12 @@
           Tips: Nästa version kan få sök, filtrering, export av exempel och en redaktörsvy för att lägga in egna exempel per ruta.
         </p>
 
-        <div class="editor-fields" id="editor-fields">
+        <div class="editor-fields" id="editor-panel">
           <p class="editor-hint">Administratörsläge: redigera texten nedan och spara ändringarna.</p>
           <label>Titel
             <input type="text" id="edit-title">
           </label>
-          <label>Sammanfattning (visas i matris + popup)
+          <label>Sammanfattning
             <textarea id="edit-summary"></textarea>
           </label>
           <label>Exempel
@@ -635,22 +632,61 @@
           <label>Praktiskt genomförande
             <textarea id="edit-practical"></textarea>
           </label>
-          <label>Vad det ger (en punkt per rad)
-            <textarea id="edit-benefits"></textarea>
-          </label>
-          <label>Att tänka på
-            <textarea id="edit-notes"></textarea>
-          </label>
           <label>Länk till bild/film (URL)
             <input type="url" id="edit-media-url" placeholder="https://...">
           </label>
-          <button class="save-button" id="save-cell" type="button">Spara ändringar</button>
+          <div>
+            <button class="role-button" id="editor-cancel" type="button">Cancel</button>
+            <button class="save-button" id="editor-save" type="button">Save</button>
+          </div>
         </div>
       </aside>
     </div>
+
+    <div class="modal" id="login-modal">
+      <aside class="detail-card">
+        <div class="detail-header"><h2>Admin login</h2><button class="close-button" data-close-modal="true" type="button">×</button></div>
+        <form class="editor-fields open" id="admin-login-form">
+          <label>Username<input name="username" required></label>
+          <label>Password<input type="password" name="password" required></label>
+          <button class="role-button" type="submit">Login</button>
+        </form>
+        <p class="login-message" id="login-message"></p>
+      </aside>
+    </div>
+
+    <div class="modal" id="change-password-modal">
+      <aside class="detail-card">
+        <div class="detail-header"><h2>Change password</h2></div>
+        <form class="editor-fields open" id="change-password-form">
+          <label>New password<input type="password" name="newPassword" minlength="10" required></label>
+          <label>Confirm password<input type="password" name="confirmPassword" minlength="10" required></label>
+          <button class="role-button" type="submit">Save password</button>
+        </form>
+        <p class="login-message" id="password-message"></p>
+      </aside>
+    </div>
+
+    <div class="modal" id="admins-modal">
+      <aside class="detail-card">
+        <div class="detail-header"><h2>Manage admins</h2><button class="close-button" data-close-modal="true" type="button">×</button></div>
+        <table class="matrix"><thead><tr><th>Username</th><th>Actions</th></tr></thead><tbody id="admins-table-body"></tbody></table>
+        <form class="editor-fields open" id="create-admin-form">
+          <label>Username<input name="username" required></label>
+          <label>Password<input type="password" name="password" minlength="10" required></label>
+          <button class="role-button" type="submit">Create admin</button>
+        </form>
+        <p class="login-message" id="admin-message"></p>
+      </aside>
+    </div>
+
   </div>
 
-  <script>
+  <script type="module">
+    import { createAdminUI } from './admin-ui.js';
+    import { createEditor, renderMedia } from './editor.js';
+    import { authHeaders } from './auth.js';
+
     const initialData = [
       {
         level: 'Bas',
@@ -869,8 +905,6 @@
       }
     ];
 
-    const TOKEN_STORAGE_KEY = 'pedagogiskKartaAuthToken';
-
     const matrixBody = document.getElementById('matrix-body');
     const detailTitle = document.getElementById('detail-title');
     const detailMeta = document.getElementById('detail-meta');
@@ -882,59 +916,21 @@
     const detailMedia = document.getElementById('detail-media');
     const detailModal = document.getElementById('detail-modal');
     const closeModalButton = document.getElementById('close-modal');
-    const roleControls = document.getElementById('role-controls');
-    const roleStatus = document.getElementById('role-status');
-    const roleToggle = document.getElementById('role-toggle');
-    const roleUserPill = document.getElementById('role-user-pill');
-    const roleAdminPill = document.getElementById('role-admin-pill');
-    const loginForm = document.getElementById('login-form');
-    const loginUsername = document.getElementById('login-username');
-    const loginPassword = document.getElementById('login-password');
-    const loginButton = document.getElementById('login-button');
-    const loginMessage = document.getElementById('login-message');
-    const editorFields = document.getElementById('editor-fields');
-    const editTitle = document.getElementById('edit-title');
-    const editSummary = document.getElementById('edit-summary');
-    const editExample = document.getElementById('edit-example');
-    const editPractical = document.getElementById('edit-practical');
-    const editBenefits = document.getElementById('edit-benefits');
-    const editNotes = document.getElementById('edit-notes');
-    const editMediaUrl = document.getElementById('edit-media-url');
-    const saveCellButton = document.getElementById('save-cell');
 
-    let isAdmin = false;
-    let token = localStorage.getItem(TOKEN_STORAGE_KEY) ?? '';
     let selectedCellIndex = null;
     let data = structuredClone(initialData);
+    let isAdmin = false;
+    let editMode = false;
 
-    const rowIcons = {
-      'PDF / Dokument': '📄',
-      'Quiz / Interaktivt test': '❓',
-      'Video / Genomgång': '🎬',
-      'Simulering / Scenario': '🧩',
-      'XR / Immersiv miljö': '🥽'
-    };
-
-    const cellIcons = {
-      'Kunskapsinhämtning': '📘',
-      'Förståelse / Fördjupning': '🧠',
-      'Träning / Tillämpning': '🛠️',
-      'Examination / Återkoppling': '✅'
-    };
+    const rowIcons = { 'PDF / Dokument':'📄','Quiz / Interaktivt test':'❓','Video / Genomgång':'🎬','Simulering / Scenario':'🧩','XR / Immersiv miljö':'🥽' };
+    const cellIcons = { 'Kunskapsinhämtning':'📘','Förståelse / Fördjupning':'🧠','Träning / Tillämpning':'🛠️','Examination / Återkoppling':'✅' };
 
     async function loadData() {
       try {
         const response = await fetch('/api/data');
-        if (!response.ok) {
-          throw new Error('Kunde inte ladda data.');
-        }
-
+        if (!response.ok) throw new Error('Kunde inte ladda data.');
         const loadedData = await response.json();
-        if (Array.isArray(loadedData)) {
-          data = loadedData;
-        } else {
-          data = structuredClone(initialData);
-        }
+        data = Array.isArray(loadedData) ? loadedData : Array.isArray(loadedData.matrix) ? loadedData.matrix : structuredClone(initialData);
       } catch {
         data = structuredClone(initialData);
       }
@@ -943,34 +939,19 @@
     async function saveData() {
       const response = await fetch('/api/data', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(data)
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ matrix: data })
       });
-
-      if (!response.ok) {
-        throw new Error('Kunde inte spara data.');
-      }
+      if (!response.ok) throw new Error('Kunde inte spara data.');
     }
 
-    function openModal() {
-      detailModal.classList.add('open');
-      document.body.style.overflow = 'hidden';
-      closeModalButton.focus();
-    }
-
-    function closeModal() {
-      detailModal.classList.remove('open');
-      document.body.style.overflow = '';
-    }
+    function openModal() { detailModal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeModal() { detailModal.classList.remove('open'); editor.close(); document.body.style.overflow = ''; }
 
     function renderMatrix() {
       matrixBody.innerHTML = '';
       data.forEach((row, rowIndex) => {
         const tr = document.createElement('tr');
-
         const rowHeader = document.createElement('th');
         rowHeader.className = `row-header ${row.rowClass}`;
         rowHeader.scope = 'row';
@@ -980,21 +961,12 @@
         row.cells.forEach((cell, cellIndex) => {
           const td = document.createElement('td');
           td.className = 'cell';
-
           const button = document.createElement('button');
           button.type = 'button';
           button.dataset.row = rowIndex;
           button.dataset.cell = cellIndex;
-          button.innerHTML = `
-            <span class="tag">${row.method}</span>
-            <span class="topline">
-              <span class="icon" aria-hidden="true">${cellIcons[cell.category] ?? '📌'}</span>
-              <span class="title">${cell.title}</span>
-            </span>
-            <span class="summary">${cell.summary}</span>
-          `;
+          button.innerHTML = `<span class="tag">${row.method}</span><span class="topline"><span class="icon" aria-hidden="true">${cellIcons[cell.category] ?? '📌'}</span><span class="title">${cell.title}</span></span><span class="summary">${cell.summary}</span>`;
           button.addEventListener('click', () => showDetail(row, cell, button));
-
           td.appendChild(button);
           tr.appendChild(td);
         });
@@ -1003,232 +975,46 @@
       });
     }
 
-    function updateRoleUI() {
-      roleStatus.setAttribute('aria-label', `Aktiv roll: ${isAdmin ? 'Administratör' : 'Användare'}`);
-      roleToggle.textContent = isAdmin ? 'Logga ut' : 'Administratör krävs';
-      roleUserPill.classList.toggle('active', !isAdmin);
-      roleAdminPill.classList.toggle('active', isAdmin);
-      roleControls.classList.toggle('is-admin', isAdmin);
-      editorFields.classList.toggle('open', isAdmin && selectedCellIndex !== null);
-      loginForm.classList.toggle('hidden', isAdmin);
-      roleToggle.classList.toggle('hidden', !isAdmin);
-    }
-
-    function fillEditor(cell) {
-      editTitle.value = cell.title;
-      editSummary.value = cell.summary;
-      editExample.value = cell.example;
-      editPractical.value = cell.practical;
-      editBenefits.value = cell.benefits.join('\n');
-      editNotes.value = cell.notes;
-      editMediaUrl.value = cell.mediaUrl ?? '';
-    }
-
-    function renderMedia(cell) {
-      detailMedia.innerHTML = '';
-
-      const mediaUrl = (cell.mediaUrl ?? '').trim();
-      if (!mediaUrl) {
-        detailMedia.innerHTML = '<p class="media-placeholder">Exempelbild/film</p>';
-        return;
-      }
-
-      const lowerUrl = mediaUrl.toLowerCase();
-      const isImage = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.avif'].some(ext => lowerUrl.includes(ext));
-      const isVideoFile = ['.mp4', '.webm', '.ogg', '.mov', '.m4v'].some(ext => lowerUrl.includes(ext));
-      const isYoutube = lowerUrl.includes('youtube.com/watch') || lowerUrl.includes('youtu.be/');
-
-      if (isImage) {
-        const img = document.createElement('img');
-        img.src = mediaUrl;
-        img.alt = `Exempelbild för ${cell.title}`;
-        detailMedia.appendChild(img);
-        return;
-      }
-
-      if (isVideoFile) {
-        const video = document.createElement('video');
-        video.src = mediaUrl;
-        video.controls = true;
-        detailMedia.appendChild(video);
-        return;
-      }
-
-      if (isYoutube) {
-        const iframe = document.createElement('iframe');
-        iframe.src = toYoutubeEmbedUrl(mediaUrl);
-        iframe.title = `Exempelfilm för ${cell.title}`;
-        iframe.loading = 'lazy';
-        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-        iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-        iframe.allowFullscreen = true;
-        detailMedia.appendChild(iframe);
-        return;
-      }
-
-      const link = document.createElement('a');
-      link.href = mediaUrl;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.textContent = 'Öppna bild/film';
-      detailMedia.appendChild(link);
-    }
-
-    function toYoutubeEmbedUrl(url) {
-      try {
-        const parsed = new URL(url);
-        if (parsed.hostname.includes('youtu.be')) {
-          const id = parsed.pathname.replace('/', '');
-          return `https://www.youtube.com/embed/${id}`;
-        }
-
-        const videoId = parsed.searchParams.get('v');
-        if (videoId) {
-          return `https://www.youtube.com/embed/${videoId}`;
-        }
-      } catch {
-        return url;
-      }
-
-      return url;
-    }
-
     function showDetail(row, cell, activeButton) {
-      selectedCellIndex = {
-        row: Number(activeButton.dataset.row),
-        cell: Number(activeButton.dataset.cell)
-      };
-
-      document.querySelectorAll('.cell button').forEach(btn => btn.setAttribute('aria-pressed', 'false'));
-      activeButton.setAttribute('aria-pressed', 'true');
-
+      selectedCellIndex = { row: Number(activeButton.dataset.row), cell: Number(activeButton.dataset.cell) };
       detailTitle.textContent = cell.title;
-      detailMeta.innerHTML = `
-        <span class="pill">${row.level}</span>
-        <span class="pill">${row.method}</span>
-        <span class="pill">${cell.category}</span>
-      `;
+      detailMeta.innerHTML = `<span class="pill">${row.level}</span><span class="pill">${row.method}</span><span class="pill">${cell.category}</span>`;
       detailIntro.textContent = cell.summary;
       detailExample.textContent = cell.example;
       detailPractical.textContent = cell.practical;
-      detailNotes.textContent = cell.notes;
-      renderMedia(cell);
+      detailNotes.textContent = cell.notes || '';
       detailBenefits.innerHTML = '';
-      cell.benefits.forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = item;
-        detailBenefits.appendChild(li);
-      });
-
-      if (isAdmin) {
-        fillEditor(cell);
-      }
-      updateRoleUI();
-
+      (cell.benefits || []).forEach((item) => { const li = document.createElement('li'); li.textContent = item; detailBenefits.appendChild(li); });
+      renderMedia(detailMedia, cell);
+      editor.bindCell(cell);
+      editor.setAdminEnabled(isAdmin && editMode);
       openModal();
     }
 
-    async function saveSelectedCell() {
-      if (!isAdmin || !selectedCellIndex) return;
-
-      const cell = data[selectedCellIndex.row].cells[selectedCellIndex.cell];
-      cell.title = editTitle.value.trim();
-      cell.summary = editSummary.value.trim();
-      cell.example = editExample.value.trim();
-      cell.practical = editPractical.value.trim();
-      cell.notes = editNotes.value.trim();
-      cell.mediaUrl = editMediaUrl.value.trim();
-      cell.benefits = editBenefits.value
-        .split('\n')
-        .map(item => item.trim())
-        .filter(Boolean);
-
-      if (cell.benefits.length === 0) {
-        cell.benefits = ['(Ingen punkt angiven)'];
-      }
-
-      try {
+    const editor = createEditor({
+      modal: detailModal,
+      onSave: async (values) => {
+        if (!selectedCellIndex) return;
+        const cell = data[selectedCellIndex.row].cells[selectedCellIndex.cell];
+        Object.assign(cell, values);
         await saveData();
         renderMatrix();
-        showDetail(data[selectedCellIndex.row], cell, document.querySelector(`button[data-row="${selectedCellIndex.row}"][data-cell="${selectedCellIndex.cell}"]`));
-        alert('Ändringar sparade.');
-      } catch {
-        alert('Kunde inte spara ändringarna. Kontrollera inloggning.');
-      }
-    }
-
-    async function login(username, password) {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username, password })
-      });
-
-      if (!response.ok) {
-        throw new Error('Fel användarnamn eller lösenord.');
-      }
-
-      const body = await response.json();
-      if (!body.token) {
-        throw new Error('Inloggning misslyckades.');
-      }
-
-      token = body.token;
-      localStorage.setItem(TOKEN_STORAGE_KEY, token);
-      isAdmin = true;
-    }
-
-    function logout() {
-      isAdmin = false;
-      token = '';
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
-    }
-
-    roleToggle.addEventListener('click', () => {
-      logout();
-      loginMessage.textContent = 'Du är utloggad.';
-      updateRoleUI();
-    });
-
-    loginForm.addEventListener('submit', async event => {
-      event.preventDefault();
-      loginMessage.textContent = '';
-      loginButton.disabled = true;
-
-      try {
-        await login(loginUsername.value.trim(), loginPassword.value);
-        loginPassword.value = '';
-        loginMessage.textContent = 'Inloggad som administratör.';
-        updateRoleUI();
-      } catch (error) {
-        loginMessage.textContent = error.message;
-        isAdmin = false;
-      } finally {
-        loginButton.disabled = false;
+        const updatedButton = document.querySelector(`button[data-row="${selectedCellIndex.row}"][data-cell="${selectedCellIndex.cell}"]`);
+        if (updatedButton) showDetail(data[selectedCellIndex.row], cell, updatedButton);
       }
     });
 
-    saveCellButton.addEventListener('click', saveSelectedCell);
+    createAdminUI({
+      onAdminChange: (admin) => { isAdmin = admin; editor.setAdminEnabled(isAdmin && editMode); },
+      onToggleEditMode: (enabled) => { editMode = enabled; editor.setAdminEnabled(isAdmin && editMode); }
+    });
 
-    async function init() {
-      await loadData();
-      renderMatrix();
-      updateRoleUI();
-    }
-
-    init();
+    await loadData();
+    renderMatrix();
 
     closeModalButton.addEventListener('click', closeModal);
-    detailModal.addEventListener('click', event => {
-      if (event.target === detailModal) closeModal();
-    });
-    document.addEventListener('keydown', event => {
-      if (event.key === 'Escape' && detailModal.classList.contains('open')) {
-        closeModal();
-      }
-    });
+    detailModal.addEventListener('click', (event) => { if (event.target === detailModal) closeModal(); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && detailModal.classList.contains('open')) closeModal(); });
   </script>
 </body>
 </html>

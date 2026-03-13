@@ -65,6 +65,7 @@
       margin: 18px auto 0;
       display: inline-flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: 12px;
       padding: 10px 14px;
       background: rgba(255,255,255,0.2);
@@ -122,6 +123,33 @@
 
     .role-button {
       border: 1px solid #9fb0bf;
+    }
+
+    .login-form {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .login-form input {
+      border: 1px solid #bfd0df;
+      border-radius: 8px;
+      padding: 6px 10px;
+      min-width: 140px;
+      font: inherit;
+    }
+
+    .login-message {
+      margin: 0;
+      width: 100%;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #eaf7ff;
+      min-height: 1em;
+    }
+
+    .hidden {
+      display: none !important;
     }
 
     .role-button:hover,
@@ -521,7 +549,13 @@
           <span class="role-pill active" id="role-user-pill">Användare</span>
           <span class="role-pill" id="role-admin-pill">Administratör</span>
         </span>
+        <form class="login-form" id="login-form">
+          <input type="text" id="login-username" name="username" autocomplete="username" placeholder="username" required>
+          <input type="password" id="login-password" name="password" autocomplete="current-password" placeholder="password" required>
+          <button class="role-button" id="login-button" type="submit">Logga in</button>
+        </form>
         <button class="role-button" id="role-toggle" type="button">Byt till administratör</button>
+        <p class="login-message" id="login-message" aria-live="polite"></p>
       </div>
     </section>
 
@@ -835,8 +869,7 @@
       }
     ];
 
-    const STORAGE_KEY = 'pedagogiskKartaData';
-    const ADMIN_PASSWORD = 'utbe';
+    const TOKEN_STORAGE_KEY = 'pedagogiskKartaAuthToken';
 
     const matrixBody = document.getElementById('matrix-body');
     const detailTitle = document.getElementById('detail-title');
@@ -854,6 +887,11 @@
     const roleToggle = document.getElementById('role-toggle');
     const roleUserPill = document.getElementById('role-user-pill');
     const roleAdminPill = document.getElementById('role-admin-pill');
+    const loginForm = document.getElementById('login-form');
+    const loginUsername = document.getElementById('login-username');
+    const loginPassword = document.getElementById('login-password');
+    const loginButton = document.getElementById('login-button');
+    const loginMessage = document.getElementById('login-message');
     const editorFields = document.getElementById('editor-fields');
     const editTitle = document.getElementById('edit-title');
     const editSummary = document.getElementById('edit-summary');
@@ -865,8 +903,9 @@
     const saveCellButton = document.getElementById('save-cell');
 
     let isAdmin = false;
+    let token = localStorage.getItem(TOKEN_STORAGE_KEY) ?? '';
     let selectedCellIndex = null;
-    let data = loadData();
+    let data = structuredClone(initialData);
 
     const rowIcons = {
       'PDF / Dokument': '📄',
@@ -883,18 +922,37 @@
       'Examination / Återkoppling': '✅'
     };
 
-    function loadData() {
-      const storedData = localStorage.getItem(STORAGE_KEY);
-      if (!storedData) return structuredClone(initialData);
+    async function loadData() {
       try {
-        return JSON.parse(storedData);
+        const response = await fetch('/api/data');
+        if (!response.ok) {
+          throw new Error('Kunde inte ladda data.');
+        }
+
+        const loadedData = await response.json();
+        if (Array.isArray(loadedData)) {
+          data = loadedData;
+        } else {
+          data = structuredClone(initialData);
+        }
       } catch {
-        return structuredClone(initialData);
+        data = structuredClone(initialData);
       }
     }
 
-    function saveData() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    async function saveData() {
+      const response = await fetch('/api/data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        throw new Error('Kunde inte spara data.');
+      }
     }
 
     function openModal() {
@@ -947,11 +1005,13 @@
 
     function updateRoleUI() {
       roleStatus.setAttribute('aria-label', `Aktiv roll: ${isAdmin ? 'Administratör' : 'Användare'}`);
-      roleToggle.textContent = isAdmin ? 'Byt till användare' : 'Byt till administratör';
+      roleToggle.textContent = isAdmin ? 'Logga ut' : 'Administratör krävs';
       roleUserPill.classList.toggle('active', !isAdmin);
       roleAdminPill.classList.toggle('active', isAdmin);
       roleControls.classList.toggle('is-admin', isAdmin);
       editorFields.classList.toggle('open', isAdmin && selectedCellIndex !== null);
+      loginForm.classList.toggle('hidden', isAdmin);
+      roleToggle.classList.toggle('hidden', !isAdmin);
     }
 
     function fillEditor(cell) {
@@ -1068,7 +1128,7 @@
       openModal();
     }
 
-    function saveSelectedCell() {
+    async function saveSelectedCell() {
       if (!isAdmin || !selectedCellIndex) return;
 
       const cell = data[selectedCellIndex.row].cells[selectedCellIndex.cell];
@@ -1087,32 +1147,78 @@
         cell.benefits = ['(Ingen punkt angiven)'];
       }
 
-      saveData();
-      renderMatrix();
-      showDetail(data[selectedCellIndex.row], cell, document.querySelector(`button[data-row="${selectedCellIndex.row}"][data-cell="${selectedCellIndex.cell}"]`));
-      alert('Ändringar sparade.');
+      try {
+        await saveData();
+        renderMatrix();
+        showDetail(data[selectedCellIndex.row], cell, document.querySelector(`button[data-row="${selectedCellIndex.row}"][data-cell="${selectedCellIndex.cell}"]`));
+        alert('Ändringar sparade.');
+      } catch {
+        alert('Kunde inte spara ändringarna. Kontrollera inloggning.');
+      }
+    }
+
+    async function login(username, password) {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      });
+
+      if (!response.ok) {
+        throw new Error('Fel användarnamn eller lösenord.');
+      }
+
+      const body = await response.json();
+      if (!body.token) {
+        throw new Error('Inloggning misslyckades.');
+      }
+
+      token = body.token;
+      localStorage.setItem(TOKEN_STORAGE_KEY, token);
+      isAdmin = true;
+    }
+
+    function logout() {
+      isAdmin = false;
+      token = '';
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
     }
 
     roleToggle.addEventListener('click', () => {
-      if (isAdmin) {
-        isAdmin = false;
-        updateRoleUI();
-        return;
-      }
+      logout();
+      loginMessage.textContent = 'Du är utloggad.';
+      updateRoleUI();
+    });
 
-      const enteredPassword = prompt('Ange administratörslösenord:');
-      if (enteredPassword === ADMIN_PASSWORD) {
-        isAdmin = true;
+    loginForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      loginMessage.textContent = '';
+      loginButton.disabled = true;
+
+      try {
+        await login(loginUsername.value.trim(), loginPassword.value);
+        loginPassword.value = '';
+        loginMessage.textContent = 'Inloggad som administratör.';
         updateRoleUI();
-      } else if (enteredPassword !== null) {
-        alert('Fel lösenord.');
+      } catch (error) {
+        loginMessage.textContent = error.message;
+        isAdmin = false;
+      } finally {
+        loginButton.disabled = false;
       }
     });
 
     saveCellButton.addEventListener('click', saveSelectedCell);
 
-    renderMatrix();
-    updateRoleUI();
+    async function init() {
+      await loadData();
+      renderMatrix();
+      updateRoleUI();
+    }
+
+    init();
 
     closeModalButton.addEventListener('click', closeModal);
     detailModal.addEventListener('click', event => {

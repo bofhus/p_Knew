@@ -508,16 +508,24 @@
       place-items: center;
       background: #f7fbff;
       overflow: hidden;
+      width: 100%;
+      max-width: 100%;
     }
 
     .media-box img,
     .media-box video,
     .media-box iframe {
       width: 100%;
-      max-height: 320px;
+      max-width: 100%;
+      max-height: min(52vh, 420px);
       border: 0;
       object-fit: contain;
       background: #000;
+    }
+
+    .media-box iframe {
+      aspect-ratio: 16 / 9;
+      min-height: 220px;
     }
 
     .media-placeholder {
@@ -531,6 +539,21 @@
     @media (max-width: 1100px) {
       .detail-card {
         max-height: 92vh;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .detail-card {
+        width: calc(100vw - 16px);
+        padding: 16px;
+      }
+
+      .media-box {
+        min-height: 160px;
+      }
+
+      .media-box iframe {
+        min-height: 180px;
       }
     }
   </style>
@@ -639,6 +662,7 @@
             <button class="role-button" id="editor-cancel" type="button">Cancel</button>
             <button class="save-button" id="editor-save" type="button">Save</button>
           </div>
+          <p class="editor-hint" id="editor-status" aria-live="polite"></p>
         </div>
       </aside>
     </div>
@@ -942,7 +966,10 @@
         headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ matrix: data })
       });
-      if (!response.ok) throw new Error('Kunde inte spara data.');
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.message || 'Kunde inte spara data.');
+      }
     }
 
     function openModal() { detailModal.classList.add('open'); document.body.style.overflow = 'hidden'; }

@@ -3,6 +3,7 @@ export function createEditor({ modal, onSave }) {
   const panel = modal.querySelector('#editor-panel');
   const saveButton = modal.querySelector('#editor-save');
   const cancelButton = modal.querySelector('#editor-cancel');
+  const statusMessage = modal.querySelector('#editor-status');
 
   const fields = {
     title: modal.querySelector('#edit-title'),
@@ -17,6 +18,7 @@ export function createEditor({ modal, onSave }) {
   function setVisible(nextVisible) {
     visible = nextVisible;
     panel.classList.toggle('open', visible);
+    if (!visible && statusMessage) statusMessage.textContent = '';
     if (visible) fields.title.focus();
   }
 
@@ -37,14 +39,21 @@ export function createEditor({ modal, onSave }) {
   openButton.addEventListener('click', () => setVisible(!visible));
   cancelButton.addEventListener('click', () => setVisible(false));
   saveButton.addEventListener('click', async () => {
-    await onSave({
-      title: fields.title.value.trim(),
-      summary: fields.summary.value.trim(),
-      example: fields.example.value.trim(),
-      practical: fields.practical.value.trim(),
-      mediaUrl: fields.mediaUrl.value.trim()
-    });
-    setVisible(false);
+    if (statusMessage) statusMessage.textContent = '';
+
+    try {
+      await onSave({
+        title: fields.title.value.trim(),
+        summary: fields.summary.value.trim(),
+        example: fields.example.value.trim(),
+        practical: fields.practical.value.trim(),
+        mediaUrl: fields.mediaUrl.value.trim()
+      });
+      if (statusMessage) statusMessage.textContent = 'Ändringar sparades.';
+      setVisible(false);
+    } catch (error) {
+      if (statusMessage) statusMessage.textContent = error?.message || 'Kunde inte spara ändringar.';
+    }
   });
 
   return {

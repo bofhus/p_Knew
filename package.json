@@ -1,0 +1,14 @@
+{
+  "name": "training-design-backend",
+  "version": "1.0.0",
+  "description": "Minimal Node.js + Express backend for training design web app",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

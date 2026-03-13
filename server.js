@@ -120,6 +120,8 @@ app.post('/api/change-password', auth, async (req, res) => {
       return res.status(400).json({ message: 'newPassword is required and must be at least 10 characters' });
     }
 
+    const normalizedPassword = newPassword.trim();
+
     const adminStore = getAdminStore();
     const admin = findAdminByUsername(adminStore, req.user.username);
 
@@ -127,7 +129,7 @@ app.post('/api/change-password', auth, async (req, res) => {
       return res.status(404).json({ message: 'Admin not found' });
     }
 
-    admin.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    admin.passwordHash = await bcrypt.hash(normalizedPassword, SALT_ROUNDS);
     admin.mustChangePassword = false;
     saveAdminStore(adminStore);
 

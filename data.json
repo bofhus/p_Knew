@@ -1,3 +1,12 @@
 {
-  "examples": []
+  "cells": [
+    {
+      "id": "quiz_basic",
+      "title": "Kunskapstest",
+      "summary": "Snabba frågor",
+      "example": "Fem flervalsfrågor efter modulen",
+      "practical": "Automatisk rättning",
+      "media": ""
+    }
+  ]
 }

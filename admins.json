@@ -1,0 +1,9 @@
+{
+  "admins": [
+    {
+      "username": "admin",
+      "passwordHash": "$2b$10$PELRCHweYb6Oq2ghPP18leYRi7Tm400LunRLwnSnMAVvt0HMnGYjy",
+      "mustChangePassword": true
+    }
+  ]
+}
